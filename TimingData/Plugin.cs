@@ -51,7 +51,9 @@ namespace TimingData
         private static float[,] centeredLeftHandAverageTiming = new float[3, 3], centeredRightHandAverageTiming = new float[3, 3];
         private static float leftHandOverallTiming = 0f, rightHandOverallTiming = 0f, leftHandUnstableRate = 0f, rightHandUnstableRate = 0f;
         private static float centeredLeftHandOverallTiming = 0f, centeredRightHandOverallTiming = 0f;
-        private const float minHitboxDistance = 0.559f, maxHitboxDistance = 0.640f; // Distance in meters from yz/xz hitbox to center.
+
+        private const float minHitboxDistance = 0.559017f, maxHitboxDistance = 0.640312f; // Distance in meters from yz/xz hitbox to center.
+        private const float degreesToRadians = 0.0174533f;
 
         [OnStart]
         public void OnApplicationStart()
@@ -131,21 +133,24 @@ namespace TimingData
                 default: row = 0; break;
             }
             col = nci.noteData.lineIndex;
-            float time = (nci.timeDeviation - (Mathf.Lerp(minHitboxDistance, maxHitboxDistance, nci.cutDirDeviation / 90) / nci.saberSpeed)) * 1000f;
+
+            float distanceToCenter = (minHitboxDistance * (float)Math.Cos(nci.cutDirDeviation * degreesToRadians)) + (maxHitboxDistance * (float)Math.Sin(nci.cutDirDeviation * degreesToRadians));
+            float time = (nci.timeDeviation + (distanceToCenter / nci.saberSpeed)) * -1000f;
+
             if (nci.saberType == SaberType.SaberA) {
                 leftHandTimings[row, col].Add(time);
                 if (IsCenteredNote(nci.saberType, row, col, nci.noteData.cutDirection))
                     centeredLeftHandTimings[row, col].Add(time);
             }
             else {
-                rightHandTimings[row, col].Add((nci.timeDeviation - (minHitboxDistance / nci.saberSpeed)) * 1000f);
+                rightHandTimings[row, col].Add(time);
                 if (IsCenteredNote(nci.saberType, row, col, nci.noteData.cutDirection))
                     centeredRightHandTimings[row, col-1].Add(time);
             }
         }
 
-        // Tells if the note can be cut straight from the hand's position (excluding vision-blocking notes).
-        private static Boolean IsCenteredNote(SaberType st, int row, int col, NoteCutDirection ncd) {
+        // Tells if the note can be cut straight from the hand's position and isn't an invert note (excluding vision-blocking notes).
+        private static bool IsCenteredNote(SaberType st, int row, int col, NoteCutDirection ncd) {
             if (st == SaberType.SaberA && row == 0 && col == 0 && (ncd == NoteCutDirection.Left || ncd == NoteCutDirection.UpLeft || ncd == NoteCutDirection.Up)) return true;
             if (st == SaberType.SaberA && row == 0 && col == 1 && (ncd == NoteCutDirection.UpLeft || ncd == NoteCutDirection.Up || ncd == NoteCutDirection.UpRight)) return true;
             if (st == SaberType.SaberA && row == 0 && col == 2 && (ncd == NoteCutDirection.Up || ncd == NoteCutDirection.UpRight || ncd == NoteCutDirection.Right)) return true;
@@ -243,37 +248,53 @@ namespace TimingData
 
             string rowTimings;
             Log.Info("-");
-            Log.Info("Left hand timings minus average: ");
+            Log.Info("Left hand timings relative to average: ");
             for (int i = 0; i < 3; i++) {
                 rowTimings = "";
-                for (int j = 0; j < 4; j++)
-                    rowTimings += string.Format("{0:F1} ", (leftHandAverageTiming[i, j] - leftHandOverallTiming));
+                for (int j = 0; j < 4; j++) {
+                    if (leftHandAverageTiming[i, j] == 0.0f)
+                        rowTimings += "N/A ";
+                    else
+                        rowTimings += string.Format("{0:F1} ", leftHandAverageTiming[i, j] - leftHandOverallTiming);
+                }
                 Log.Info(rowTimings);
             }
             Log.Info("-");
-            Log.Info("Right hand timings minus average: ");
+            Log.Info("Right hand timings relative to average: ");
             for (int i = 0; i < 3; i++) {
                 rowTimings = "";
-                for (int j = 0; j < 4; j++)
-                    rowTimings += string.Format("{0:F1} ", (rightHandAverageTiming[i, j] - rightHandOverallTiming));
+                for (int j = 0; j < 4; j++) {
+                    if (rightHandAverageTiming[i, j] == 0.0f)
+                        rowTimings += "N/A ";
+                    else
+                        rowTimings += string.Format("{0:F1} ", rightHandAverageTiming[i, j] - rightHandOverallTiming);
+                }
                 Log.Info(rowTimings);
             }
             Log.Info("-");
-            Log.Info("Centered Left hand timings minus average: ");
+            Log.Info("Centered Left hand timings relative to average: ");
             for (int i = 0; i < 3; i++)
             {
                 rowTimings = "";
-                for (int j = 0; j < 3; j++)
-                    rowTimings += string.Format("{0:F1} ", (centeredLeftHandAverageTiming[i, j] - centeredLeftHandOverallTiming));
+                for (int j = 0; j < 3; j++) {
+                    if (centeredLeftHandAverageTiming[i, j] == 0.0f)
+                        rowTimings += "N/A ";
+                    else
+                        rowTimings += string.Format("{0:F1} ", centeredLeftHandAverageTiming[i, j] - centeredLeftHandOverallTiming);
+                }
                 Log.Info(rowTimings);
             }
             Log.Info("-");
-            Log.Info("Centered right hand timings minus average: ");
+            Log.Info("Centered right hand timings relative to average: ");
             for (int i = 0; i < 3; i++)
             {
                 rowTimings = "";
-                for (int j = 0; j < 3; j++)
-                    rowTimings += string.Format("{0:F1} ", (centeredRightHandAverageTiming[i, j] - centeredRightHandOverallTiming));
+                for (int j = 0; j < 3; j++) {
+                    if (centeredRightHandAverageTiming[i, j] == 0.0f)
+                        rowTimings += "N/A ";
+                    else
+                        rowTimings += string.Format("{0:F1} ", centeredRightHandAverageTiming[i, j] - centeredRightHandOverallTiming);
+                }
                 Log.Info(rowTimings);
             }
         }
