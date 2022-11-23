@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "TimingData",
+  "name": "TimingData",
+  "author": "DreamReality",
+  "version": "0.0.1",
+  "description": "Measures time deviance data for each hand and note position.",
+  "gameVersion": "1.25.1",
+  "dependsOn": {
+    "BSIPA": "^4.0.5"
+  }
+}
