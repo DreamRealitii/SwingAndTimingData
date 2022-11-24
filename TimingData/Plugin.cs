@@ -135,95 +135,86 @@ namespace TimingData
             col = nci.noteData.lineIndex;
 
             float distanceToCenter = (minHitboxDistance * (float)Math.Cos(nci.cutDirDeviation * degreesToRadians)) + (maxHitboxDistance * (float)Math.Sin(nci.cutDirDeviation * degreesToRadians));
-            float time = (nci.timeDeviation + (distanceToCenter / nci.saberSpeed)) * -1000f;
+            float time = (nci.timeDeviation - (distanceToCenter / nci.saberSpeed)) * -1000f;
 
             if (nci.saberType == SaberType.SaberA) {
                 leftHandTimings[row, col].Add(time);
-                if (IsCenteredNote(nci.saberType, row, col, nci.noteData.cutDirection))
+                if (IsCenteredNote(row, col, nci.noteData.cutDirection))
                     centeredLeftHandTimings[row, col].Add(time);
             }
             else {
                 rightHandTimings[row, col].Add(time);
-                if (IsCenteredNote(nci.saberType, row, col, nci.noteData.cutDirection))
+                if (IsCenteredNote(row, 3-col, nci.noteData.cutDirection.Mirrored()))
                     centeredRightHandTimings[row, col-1].Add(time);
             }
         }
 
         // Tells if the note can be cut straight from the hand's position and isn't an invert note (excluding vision-blocking notes).
-        private static bool IsCenteredNote(SaberType st, int row, int col, NoteCutDirection ncd) {
-            if (st == SaberType.SaberA && row == 0 && col == 0 && (ncd == NoteCutDirection.Left || ncd == NoteCutDirection.UpLeft || ncd == NoteCutDirection.Up)) return true;
-            if (st == SaberType.SaberA && row == 0 && col == 1 && (ncd == NoteCutDirection.UpLeft || ncd == NoteCutDirection.Up || ncd == NoteCutDirection.UpRight)) return true;
-            if (st == SaberType.SaberA && row == 0 && col == 2 && (ncd == NoteCutDirection.Up || ncd == NoteCutDirection.UpRight || ncd == NoteCutDirection.Right)) return true;
-            if (st == SaberType.SaberA && row == 1 && col == 0 && (ncd == NoteCutDirection.DownLeft || ncd == NoteCutDirection.Left || ncd == NoteCutDirection.UpLeft)) return true;
-            if (st == SaberType.SaberA && row == 1 && col == 2 && (ncd == NoteCutDirection.UpRight || ncd == NoteCutDirection.Right || ncd == NoteCutDirection.DownRight)) return true;
-            if (st == SaberType.SaberA && row == 2 && col == 0 && (ncd == NoteCutDirection.Down || ncd == NoteCutDirection.DownLeft || ncd == NoteCutDirection.Left)) return true;
-            if (st == SaberType.SaberA && row == 2 && col == 1 && (ncd == NoteCutDirection.DownRight || ncd == NoteCutDirection.Down || ncd == NoteCutDirection.DownLeft)) return true;
-            if (st == SaberType.SaberA && row == 2 && col == 2 && (ncd == NoteCutDirection.Right || ncd == NoteCutDirection.DownRight || ncd == NoteCutDirection.Down)) return true;
-            if (st == SaberType.SaberB && row == 0 && col == 1 && (ncd == NoteCutDirection.Left || ncd == NoteCutDirection.UpLeft || ncd == NoteCutDirection.Up)) return true;
-            if (st == SaberType.SaberB && row == 0 && col == 2 && (ncd == NoteCutDirection.UpLeft || ncd == NoteCutDirection.Up || ncd == NoteCutDirection.UpRight)) return true;
-            if (st == SaberType.SaberB && row == 0 && col == 3 && (ncd == NoteCutDirection.Up || ncd == NoteCutDirection.UpRight || ncd == NoteCutDirection.Right)) return true;
-            if (st == SaberType.SaberB && row == 1 && col == 1 && (ncd == NoteCutDirection.DownLeft || ncd == NoteCutDirection.Left || ncd == NoteCutDirection.UpLeft)) return true;
-            if (st == SaberType.SaberB && row == 1 && col == 3 && (ncd == NoteCutDirection.UpRight || ncd == NoteCutDirection.Right || ncd == NoteCutDirection.DownRight)) return true;
-            if (st == SaberType.SaberB && row == 2 && col == 1 && (ncd == NoteCutDirection.Down || ncd == NoteCutDirection.DownLeft || ncd == NoteCutDirection.Left)) return true;
-            if (st == SaberType.SaberB && row == 2 && col == 2 && (ncd == NoteCutDirection.DownRight || ncd == NoteCutDirection.Down || ncd == NoteCutDirection.DownLeft)) return true;
-            if (st == SaberType.SaberB && row == 2 && col == 3 && (ncd == NoteCutDirection.Right || ncd == NoteCutDirection.DownRight || ncd == NoteCutDirection.Down)) return true;
+        private static bool IsCenteredNote(int row, int col, NoteCutDirection ncd) {
+            if (row == 0 && col == 0 && (ncd == NoteCutDirection.Left || ncd == NoteCutDirection.UpLeft || ncd == NoteCutDirection.Up)) return true;
+            if (row == 0 && col == 1 && (ncd == NoteCutDirection.UpLeft || ncd == NoteCutDirection.Up || ncd == NoteCutDirection.UpRight)) return true;
+            if (row == 0 && col == 2 && (ncd == NoteCutDirection.Up || ncd == NoteCutDirection.UpRight || ncd == NoteCutDirection.Right)) return true;
+            if (row == 1 && col == 0 && (ncd == NoteCutDirection.DownLeft || ncd == NoteCutDirection.Left || ncd == NoteCutDirection.UpLeft)) return true;
+            if (row == 1 && col == 2 && (ncd == NoteCutDirection.UpRight || ncd == NoteCutDirection.Right || ncd == NoteCutDirection.DownRight)) return true;
+            if (row == 2 && col == 0 && (ncd == NoteCutDirection.Down || ncd == NoteCutDirection.DownLeft || ncd == NoteCutDirection.Left)) return true;
+            if (row == 2 && col == 1 && (ncd == NoteCutDirection.DownRight || ncd == NoteCutDirection.Down || ncd == NoteCutDirection.DownLeft)) return true;
+            if (row == 2 && col == 2 && (ncd == NoteCutDirection.Right || ncd == NoteCutDirection.DownRight || ncd == NoteCutDirection.Down)) return true;
             return false;
         }
 
         private static void CalculateAverageData() {
             // Average timing for each note position.
-            float leftSum, rightSum;
+            float leftSum, rightSum, totalLeftSum = 0f, totalRightSum = 0f;
+            int leftCount = 0, rightCount = 0;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 4; j++) {
                     leftSum = 0f; rightSum = 0f;
-                    foreach (float n in leftHandTimings[i, j])
+                    foreach (float n in leftHandTimings[i, j]) {
                         leftSum += n;
-                    foreach (float n in rightHandTimings[i, j])
+                        totalLeftSum += n;
+                    }
+                    foreach (float n in rightHandTimings[i, j]) {
                         rightSum += n;
+                        totalRightSum += n;
+                    }
+                    leftCount += leftHandTimings[i, j].Count;
+                    rightCount += rightHandTimings[i, j].Count;
                     if (leftHandTimings[i, j].Count > 0)
                         leftHandAverageTiming[i, j] = leftSum / leftHandTimings[i, j].Count;
                     if (rightHandTimings[i, j].Count > 0)
                         rightHandAverageTiming[i, j] = rightSum / rightHandTimings[i, j].Count;
                 }
             }
+            // Average timing overall.
+            leftHandOverallTiming = totalLeftSum / leftCount;
+            rightHandOverallTiming = totalRightSum / rightCount;
             // Average timing for centered notes.
+            totalLeftSum = 0f; totalRightSum = 0f;
+            leftCount = 0; rightCount = 0;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     leftSum = 0f; rightSum = 0f;
-                    foreach (float n in centeredLeftHandTimings[i, j])
+                    foreach (float n in centeredLeftHandTimings[i, j]) {
                         leftSum += n;
-                    foreach (float n in centeredRightHandTimings[i, j])
+                        totalLeftSum += n;
+                    }
+                    foreach (float n in centeredRightHandTimings[i, j]) {
                         rightSum += n;
+                        totalRightSum += n;
+                    }
                     if (centeredLeftHandTimings[i, j].Count > 0)
                         centeredLeftHandAverageTiming[i, j] = leftSum / centeredLeftHandTimings[i, j].Count;
                     if (centeredRightHandTimings[i, j].Count > 0)
                         centeredRightHandAverageTiming[i, j] = rightSum / centeredRightHandTimings[i, j].Count;
+                    leftCount += centeredLeftHandTimings[i, j].Count;
+                    rightCount += centeredRightHandTimings[i, j].Count;
                 }
             }
-            // Average timing overall.
-            leftSum = 0f; rightSum = 0f;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 4; j++) {
-                    leftSum += leftHandAverageTiming[i, j];
-                    rightSum += rightHandAverageTiming[i, j];
-                }
-            }
-            leftHandOverallTiming = leftSum / 12;
-            rightHandOverallTiming = rightSum / 12;
             // Average centered timing.
-            leftSum = 0f; rightSum = 0f;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    leftSum += centeredLeftHandAverageTiming[i, j];
-                    rightSum += centeredRightHandAverageTiming[i, j];
-                }
-            }
-            centeredLeftHandOverallTiming = leftSum / 8;
-            centeredRightHandOverallTiming = rightSum / 8;
+            centeredLeftHandOverallTiming = totalLeftSum / leftCount;
+            centeredRightHandOverallTiming = totalRightSum / rightCount;
             // Average unstable rate.
-            leftSum = 0f;
-            rightSum = 0f;
-            int leftCount = 0, rightCount = 0;
+            leftSum = 0f; rightSum = 0f;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 4; j++) {
                     foreach (float n in leftHandTimings[i, j])
@@ -260,10 +251,10 @@ namespace TimingData
                 Log.Info(rowTimings);
             }
             Log.Info("-");
-            Log.Info("Right hand timings relative to average: ");
+            Log.Info("Right hand timings relative to average (mirrored): ");
             for (int i = 0; i < 3; i++) {
                 rowTimings = "";
-                for (int j = 0; j < 4; j++) {
+                for (int j = 3; j >= 0; j--) {
                     if (rightHandAverageTiming[i, j] == 0.0f)
                         rowTimings += "N/A ";
                     else
@@ -285,11 +276,11 @@ namespace TimingData
                 Log.Info(rowTimings);
             }
             Log.Info("-");
-            Log.Info("Centered right hand timings relative to average: ");
+            Log.Info("Centered right hand timings relative to average (mirrored): ");
             for (int i = 0; i < 3; i++)
             {
                 rowTimings = "";
-                for (int j = 0; j < 3; j++) {
+                for (int j = 2; j >= 0; j--) {
                     if (centeredRightHandAverageTiming[i, j] == 0.0f)
                         rowTimings += "N/A ";
                     else
