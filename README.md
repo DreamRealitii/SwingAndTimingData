@@ -10,3 +10,12 @@ Notes:
 - Because of above calculations, Pro Mode/Pro Mode + Small Cube values will be slightly late.
 - Units are in milliseconds, where negative numbers mean early swings and positive numbers are late swings.
 - Right now it just prints results into the console.
+
+What you want to get:
+- Average timing values are close to zero. If not, try adjusting the audio latency setting.
+- Timing values are the same for both hands. If not, try adjusting where/how you stand and change saber rotaions for each hand.
+- Timing values are about the same for all centered swing positions. If values are generally higher in one direction, try adjusting the height and saber x rotation.
+
+WIP
+- Show timing data in-game instead of the console.
+- Detect when users are playing with Pro Mode/Pro Mode + Small Cube.
