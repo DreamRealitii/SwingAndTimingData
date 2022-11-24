@@ -51,6 +51,7 @@ namespace TimingData
         private static float[,] centeredLeftHandAverageTiming = new float[3, 3], centeredRightHandAverageTiming = new float[3, 3];
         private static float leftHandOverallTiming = 0f, rightHandOverallTiming = 0f, leftHandUnstableRate = 0f, rightHandUnstableRate = 0f;
         private static float centeredLeftHandOverallTiming = 0f, centeredRightHandOverallTiming = 0f;
+        private static bool levelEnded = false; // Because BSEvents.LevelFinished sometimes gets played more than once.
 
         private const float minHitboxDistance = 0.559017f, maxHitboxDistance = 0.640312f; // Distance in meters from yz/xz hitbox to center.
         private const float degreesToRadians = 0.0174533f;
@@ -87,6 +88,7 @@ namespace TimingData
 
         private void OnLevelStart() {
             ClearTimings();
+            levelEnded = false;
         }
 
 
@@ -95,8 +97,11 @@ namespace TimingData
         }
 
         private void OnLevelEnd(object o, LevelFinishedEventArgs lfea) {
-            CalculateAverageData();
-            PrintTimingData();
+            if (levelEnded == false) {
+                CalculateAverageData();
+                PrintTimingData();
+                levelEnded = true;
+            }
         }
 
         private static void ClearTimings() {
@@ -230,12 +235,12 @@ namespace TimingData
         }
 
         private static void PrintTimingData() {
-            Log.Info(string.Format("Left hand overall timing: {0:F1}", leftHandOverallTiming));
-            Log.Info(string.Format("Right hand overall timing: {0:F1}", rightHandOverallTiming));
-            Log.Info(string.Format("Centered left hand overall timing: {0:F1}", centeredLeftHandOverallTiming));
-            Log.Info(string.Format("Centered right hand overall timing: {0:F1}", centeredRightHandOverallTiming));
-            Log.Info(string.Format("Left hand unstable rate: {0:F1}", leftHandUnstableRate));
-            Log.Info(string.Format("Right hand unstable rate: {0:F1}", rightHandUnstableRate));
+            Log.Info(string.Format("Left hand overall timing: {0:F1}ms", leftHandOverallTiming));
+            Log.Info(string.Format("Right hand overall timing: {0:F1}ms", rightHandOverallTiming));
+            Log.Info(string.Format("Centered left hand overall timing: {0:F1}ms", centeredLeftHandOverallTiming));
+            Log.Info(string.Format("Centered right hand overall timing: {0:F1}ms", centeredRightHandOverallTiming));
+            Log.Info(string.Format("Left hand unstable rate: {0:F1}ms^2", leftHandUnstableRate));
+            Log.Info(string.Format("Right hand unstable rate: {0:F1}ms^2", rightHandUnstableRate));
 
             string rowTimings;
             Log.Info("-");
