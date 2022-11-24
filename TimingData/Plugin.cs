@@ -51,6 +51,7 @@ namespace TimingData
         private static float[,] centeredLeftHandAverageTiming = new float[3, 3], centeredRightHandAverageTiming = new float[3, 3];
         private static float leftHandOverallTiming = 0f, rightHandOverallTiming = 0f, leftHandUnstableRate = 0f, rightHandUnstableRate = 0f;
         private static float centeredLeftHandOverallTiming = 0f, centeredRightHandOverallTiming = 0f;
+        private static int[] prevLeftNotePos = new int[2], prevRightNotePos = new int[2];
         private static bool levelEnded = false; // Because BSEvents.LevelFinished sometimes gets played more than once.
 
         private const float minHitboxDistance = 0.559017f, maxHitboxDistance = 0.640312f; // Distance in meters from yz/xz hitbox to center.
@@ -127,6 +128,8 @@ namespace TimingData
             centeredRightHandOverallTiming = 0f;
             leftHandUnstableRate = 0f;
             rightHandUnstableRate = 0f;
+            prevLeftNotePos[0] = 1; prevLeftNotePos[1] = 1;
+            prevRightNotePos[0] = 1; prevRightNotePos[1] = 1;
         }
 
         private static void AddTimingData(NoteCutInfo nci) {
@@ -144,12 +147,11 @@ namespace TimingData
 
             if (nci.saberType == SaberType.SaberA) {
                 leftHandTimings[row, col].Add(time);
-                if (IsCenteredNote(row, col, nci.noteData.cutDirection))
+                if (IsCenteredNote(row, col, nci.noteData.cutDirection) && IsOppositePosition(nci.saberType, row, col))
                     centeredLeftHandTimings[row, col].Add(time);
-            }
-            else {
+            } else {
                 rightHandTimings[row, col].Add(time);
-                if (IsCenteredNote(row, 3-col, nci.noteData.cutDirection.Mirrored()))
+                if (IsCenteredNote(row, 3-col, nci.noteData.cutDirection.Mirrored()) && IsOppositePosition(nci.saberType, row, 3-col))
                     centeredRightHandTimings[row, col-1].Add(time);
             }
         }
@@ -165,6 +167,27 @@ namespace TimingData
             if (row == 2 && col == 1 && (ncd == NoteCutDirection.DownRight || ncd == NoteCutDirection.Down || ncd == NoteCutDirection.DownLeft)) return true;
             if (row == 2 && col == 2 && (ncd == NoteCutDirection.Right || ncd == NoteCutDirection.DownRight || ncd == NoteCutDirection.Down)) return true;
             return false;
+        }
+
+        // Tells if the current note is in the opposite position of the previous one (required to be a centered note).
+        private static bool IsOppositePosition(SaberType st, int row, int col) {
+            /*if (row == 0 && col == 0 && prevRow == 2 && prevCol == 2) return true;
+              if (row == 1 && col == 0 && prevRow == 1 && prevCol == 2) return true;
+              if (row == 2 && col == 0 && prevRow == 0 && prevCol == 2) return true;
+              if (row == 0 && col == 1 && prevRow == 2 && prevCol == 1) return true;
+              if (row == 2 && col == 1 && prevRow == 0 && prevCol == 1) return true;
+              if (row == 0 && col == 2 && prevRow == 2 && prevCol == 0) return true;
+              if (row == 1 && col == 2 && prevRow == 1 && prevCol == 0) return true;
+              if (row == 2 && col == 2 && prevRow == 0 && prevCol == 0) return true;*/
+            bool result = false;
+            if (st == SaberType.SaberA) {
+                if (row + prevLeftNotePos[0] == 2 && col + prevLeftNotePos[1] == 2) result = true;
+                prevLeftNotePos[0] = row; prevLeftNotePos[1] = col;
+            } else {
+                if (row + prevRightNotePos[0] == 2 && col + prevRightNotePos[1] == 2) result = true;
+                prevRightNotePos[0] = row; prevRightNotePos[1] = col;
+            }
+            return result;
         }
 
         private static void CalculateAverageData() {
