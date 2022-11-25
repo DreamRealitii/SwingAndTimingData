@@ -10,12 +10,13 @@ Notes:
 - Because of above calculations, Pro Mode/Pro Mode + Small Cube values will be slightly late.
 - Units are in milliseconds, where negative numbers mean early swings and positive numbers are late swings.
 - Right now it just prints results into the console. To see the console, put --verbose into the Steam launch settings.
+- Inverted notes skew the results into the negative, while far crossover swings skew the results into the positive.
 
 What you want to get:
 - Average timing values are somewhere between -20ms to 0ms. If not, try adjusting the audio latency setting.
 - Timing values are the same for both hands. If not, try adjusting where/how you stand and change saber rotations for each hand.
-- Timing values are about the same between the top/bottom rows. If values are generally higher on one row, try adjusting the height and saber x rotation.
-- The unstable rate is as low as possible, preferably 100ms^2. If not, try using Pro Mode.
+- Timing values are about the same between the top/bottom rows. If values are generally higher on one row, try adjusting the height and/or saber x rotation.
+- The unstable rate is as low as possible, preferably under 200ms^2. If not, try using Pro Mode.
 
 WIP
 - Show timing data in-game instead of the console.
