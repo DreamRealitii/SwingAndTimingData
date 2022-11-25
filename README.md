@@ -12,11 +12,11 @@ Notes:
 - Right now it just prints results into the console. To see the console, put --verbose into the Steam launch settings.
 
 What you want to get:
-- Average timing values are close to zero. If not, try adjusting the audio latency setting.
-- Timing values are the same for both hands. If not, try adjusting where/how you stand and change saber rotaions for each hand.
-- Timing values are about the same for all centered swing positions. If values are generally higher in one direction, try adjusting the height and saber x rotation.
-- The unstable rate is as low as possible, preferably 100ms^2 or lower.
+- Average timing values are somewhere between -20ms to 0ms. If not, try adjusting the audio latency setting.
+- Timing values are the same for both hands. If not, try adjusting where/how you stand and change saber rotations for each hand.
+- Timing values are about the same for all centered swing positions. If values are generally higher in the top/bottom row, try adjusting the height and saber x rotation.
+- The unstable rate is as low as possible, preferably 100ms^2. If not, try using Pro Mode.
 
 WIP
 - Show timing data in-game instead of the console.
-- Detect when users are playing with Pro Mode/Pro Mode + Small Cube.
+- Detect when users are playing with Pro Mode/Pro Mode + Small Cube and adjust calculations.
