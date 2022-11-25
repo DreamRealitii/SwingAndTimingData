@@ -45,13 +45,15 @@ namespace TimingData
 
         // Uses units of millisecods.
         // Position [0, 0] = top left, [2, 3] = bottom right.
-        private static List<float>[,] timings = new List<float>[3, 4], leftHandTimings = new List<float>[3, 4], rightHandTimings = new List<float>[3, 4];
-        private static List<float>[,] centeredLeftHandTimings = new List<float>[3, 3], centeredRightHandTimings = new List<float>[3, 3];
-        private static float[,] averageTiming = new float[3, 4], leftHandAverageTiming = new float[3, 4], rightHandAverageTiming = new float[3, 4];
-        private static float[,] centeredLeftHandAverageTiming = new float[3, 3], centeredRightHandAverageTiming = new float[3, 3];
-        private static float overallTiming = 0f, leftHandOverallTiming = 0f, rightHandOverallTiming = 0f;
-        private static float unstableRate = 0f, leftHandUnstableRate = 0f, rightHandUnstableRate = 0f;
-        private static float centeredLeftHandOverallTiming = 0f, centeredRightHandOverallTiming = 0f;
+        private static List<float>[,] timings = new List<float>[3, 4], leftTimings = new List<float>[3, 4], rightTimings = new List<float>[3, 4];
+        private static List<float>[,] rowTimings = new List<float>[3, 1], colTimings = new List<float>[1, 4];
+        private static List<float>[,] centeredLeftTimings = new List<float>[3, 3], centeredRightTimings = new List<float>[3, 3];
+        private static float[,] averageTiming = new float[3, 4], leftAverageTiming = new float[3, 4], rightAverageTiming = new float[3, 4];
+        private static float[,] averageRowTiming = new float[3, 1], averageColTiming = new float[1, 4];
+        private static float[,] centeredLeftAverageTiming = new float[3, 3], centeredRightAverageTiming = new float[3, 3];
+        private static float overallTiming = 0f, leftOverallTiming = 0f, rightOverallTiming = 0f;
+        private static float unstableRate = 0f, leftUnstableRate = 0f, rightUnstableRate = 0f;
+        private static float centeredLeftOverallTiming = 0f, centeredRightOverallTiming = 0f;
         private static int[] prevLeftNotePos = new int[2], prevRightNotePos = new int[2];
         private static bool levelEnded = false; // Because BSEvents.LevelFinished sometimes gets played more than once.
 
@@ -70,16 +72,20 @@ namespace TimingData
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 4; j++) {
                     timings[i, j] = new List<float>();
-                    leftHandTimings[i, j] = new List<float>();
-                    rightHandTimings[i, j] = new List<float>();
+                    leftTimings[i, j] = new List<float>();
+                    rightTimings[i, j] = new List<float>();
                 }
             }
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    centeredLeftHandTimings[i, j] = new List<float>();
-                    centeredRightHandTimings[i, j] = new List<float>();
+                    centeredLeftTimings[i, j] = new List<float>();
+                    centeredRightTimings[i, j] = new List<float>();
                 }
             }
+            for (int i = 0; i < 3; i++)
+                rowTimings[i, 0] = new List<float>();
+            for (int i = 0; i < 4; i++)
+                colTimings[0, i] = new List<float>();
         }
 
         [OnExit]
@@ -90,7 +96,6 @@ namespace TimingData
         }
 
         private void OnLevelStart() {
-            ClearTimings();
             levelEnded = false;
         }
 
@@ -103,39 +108,39 @@ namespace TimingData
             if (levelEnded == false) {
                 CalculateAverageData();
                 PrintTimingData();
+                ClearTimingData();
                 levelEnded = true;
             }
         }
 
-        private static void ClearTimings() {
+        private static void ClearTimingData() {
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 4; j++) {
                     timings[i, j].Clear();
-                    leftHandTimings[i, j].Clear();
-                    rightHandTimings[i, j].Clear();
+                    leftTimings[i, j].Clear();
+                    rightTimings[i, j].Clear();
                 }
             }
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    centeredLeftHandTimings[i, j].Clear();
-                    centeredRightHandTimings[i, j].Clear();
+                    centeredLeftTimings[i, j].Clear();
+                    centeredRightTimings[i, j].Clear();
                 }
             }
+            for (int i = 0; i < 3; i++)
+                rowTimings[i, 0].Clear();
+            for (int i = 0; i < 4; i++)
+                colTimings[0, i].Clear();
             averageTiming = new float[3, 4];
-            leftHandAverageTiming = new float[3, 4];
-            rightHandAverageTiming = new float[3, 4];
-            centeredLeftHandAverageTiming = new float[3, 3];
-            centeredRightHandAverageTiming = new float[3, 3];
+            leftAverageTiming = new float[3, 4]; rightAverageTiming = new float[3, 4];
+            averageRowTiming = new float[3, 1]; averageColTiming = new float[1, 4];
+            centeredLeftAverageTiming = new float[3, 3]; centeredRightAverageTiming = new float[3, 3];
             overallTiming = 0f;
-            leftHandOverallTiming = 0f;
-            rightHandOverallTiming = 0f;
-            centeredLeftHandOverallTiming = 0f;
-            centeredRightHandOverallTiming = 0f;
+            leftOverallTiming = 0f; rightOverallTiming = 0f;
+            centeredLeftOverallTiming = 0f; centeredRightOverallTiming = 0f;
             unstableRate = 0f;
-            leftHandUnstableRate = 0f;
-            rightHandUnstableRate = 0f;
-            prevLeftNotePos[0] = 1; prevLeftNotePos[1] = 1;
-            prevRightNotePos[0] = 1; prevRightNotePos[1] = 1;
+            leftUnstableRate = 0f; rightUnstableRate = 0f;
+            prevLeftNotePos[0] = 1; prevLeftNotePos[1] = 1; prevRightNotePos[0] = 1; prevRightNotePos[1] = 1;
         }
 
         private static void AddTimingData(NoteCutInfo nci) {
@@ -153,14 +158,16 @@ namespace TimingData
             float time = (nci.timeDeviation - (distanceToCenter / nci.saberSpeed)) * -1000f;
 
             timings[row, col].Add(time);
+            rowTimings[row, 0].Add(time);
+            colTimings[0, col].Add(time);
             if (nci.saberType == SaberType.SaberA) {
-                leftHandTimings[row, col].Add(time);
+                leftTimings[row, col].Add(time);
                 if (IsCenteredNote(row, col, nci.noteData.cutDirection) && IsOppositePosition(nci.saberType, row, col))
-                    centeredLeftHandTimings[row, col].Add(time);
+                    centeredLeftTimings[row, col].Add(time);
             } else {
-                rightHandTimings[row, col].Add(time);
+                rightTimings[row, col].Add(time);
                 if (IsCenteredNote(row, 3-col, nci.noteData.cutDirection.Mirrored()) && IsOppositePosition(nci.saberType, row, 3-col))
-                    centeredRightHandTimings[row, col-1].Add(time);
+                    centeredRightTimings[row, col-1].Add(time);
             }
         }
 
@@ -191,153 +198,83 @@ namespace TimingData
         }
 
         private static void CalculateAverageData() {
-            // Average timing for each note position.
-            float sum, leftSum, rightSum, totalSum = 0f, totalLeftSum = 0f, totalRightSum = 0f;
-            int count = 0, leftCount = 0, rightCount = 0;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 4; j++) {
-                    leftSum = 0f; rightSum = 0f; sum = 0f;
+            overallTiming = AverageTimingCalculator(timings, averageTiming);
+            leftOverallTiming = AverageTimingCalculator(leftTimings, leftAverageTiming);
+            rightOverallTiming = AverageTimingCalculator(rightTimings, rightAverageTiming);
+            AverageTimingCalculator(rowTimings, averageRowTiming);
+            AverageTimingCalculator(colTimings, averageColTiming);
+
+            centeredLeftOverallTiming = AverageTimingCalculator(centeredLeftTimings, centeredLeftAverageTiming);
+            centeredRightOverallTiming = AverageTimingCalculator(centeredRightTimings, centeredRightAverageTiming);
+
+            unstableRate = UnstableRateCalculator(timings, overallTiming);
+            leftUnstableRate = UnstableRateCalculator(leftTimings, leftOverallTiming);
+            rightUnstableRate = UnstableRateCalculator(rightTimings, rightOverallTiming);
+        }
+
+        // Sets average timing values for each position in averageResults, returns average for all positions.
+        private static float AverageTimingCalculator(List<float>[,] timings, float[,] averageResults) {
+            float positionSum, totalSum = 0f;
+            int count = 0;
+            for (int i = 0; i < timings.GetLength(0); i++) {
+                for (int j = 0; j < timings.GetLength(1); j++) {
+                    positionSum = 0f;
                     foreach (float n in timings[i, j]) {
-                        sum += n;
+                        positionSum += n;
                         totalSum += n;
                     }
-                    foreach (float n in leftHandTimings[i, j]) {
-                        leftSum += n;
-                        totalLeftSum += n;
-                    }
-                    foreach (float n in rightHandTimings[i, j]) {
-                        rightSum += n;
-                        totalRightSum += n;
-                    }
                     count += timings[i, j].Count;
-                    leftCount += leftHandTimings[i, j].Count;
-                    rightCount += rightHandTimings[i, j].Count;
-                    if (leftHandTimings[i, j].Count > 0)
-                        leftHandAverageTiming[i, j] = leftSum / leftHandTimings[i, j].Count;
-                    if (rightHandTimings[i, j].Count > 0)
-                        rightHandAverageTiming[i, j] = rightSum / rightHandTimings[i, j].Count;
                     if (timings[i, j].Count > 0)
-                        averageTiming[i, j] = sum / timings[i, j].Count;
+                        averageResults[i, j] = positionSum / timings[i, j].Count;
                 }
             }
-            // Average timing overall.
-            overallTiming = totalSum / count;
-            leftHandOverallTiming = totalLeftSum / leftCount;
-            rightHandOverallTiming = totalRightSum / rightCount;
-            // Average unstable rate.
-            sum = 0f; leftSum = 0f; rightSum = 0f;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 4; j++) {
+            return totalSum / count;
+        }
+
+        // Returns unstable rate, defined as the standard deviation of all timing values.
+        private static float UnstableRateCalculator(List<float>[,] timings, float averageTiming) {
+            float sum = 0f;
+            int count = 0;
+            for (int i = 0; i < timings.GetLength(0); i++) {
+                for (int j = 0; j < timings.GetLength(1); j++) {
                     foreach (float n in timings[i, j])
-                        sum += (n - overallTiming) * (n - overallTiming);
-                    foreach (float n in leftHandTimings[i, j])
-                        leftSum += (n - leftHandOverallTiming) * (n - leftHandOverallTiming);
-                    foreach (float n in rightHandTimings[i, j])
-                        rightSum += (n - rightHandOverallTiming) * (n - rightHandOverallTiming);
+                        sum += (n - averageTiming) * (n - averageTiming);
+                    count += timings[i, j].Count;
                 }
             }
-            unstableRate = sum / count;
-            leftHandUnstableRate = leftSum / leftCount;
-            rightHandUnstableRate = rightSum / rightCount;
-            // Average timing for centered notes.
-            totalLeftSum = 0f; totalRightSum = 0f;
-            leftCount = 0; rightCount = 0;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    leftSum = 0f; rightSum = 0f;
-                    foreach (float n in centeredLeftHandTimings[i, j]) {
-                        leftSum += n;
-                        totalLeftSum += n;
-                    }
-                    foreach (float n in centeredRightHandTimings[i, j]) {
-                        rightSum += n;
-                        totalRightSum += n;
-                    }
-                    if (centeredLeftHandTimings[i, j].Count > 0)
-                        centeredLeftHandAverageTiming[i, j] = leftSum / centeredLeftHandTimings[i, j].Count;
-                    if (centeredRightHandTimings[i, j].Count > 0)
-                        centeredRightHandAverageTiming[i, j] = rightSum / centeredRightHandTimings[i, j].Count;
-                    leftCount += centeredLeftHandTimings[i, j].Count;
-                    rightCount += centeredRightHandTimings[i, j].Count;
-                }
-            }
-            // Average centered timing.
-            centeredLeftHandOverallTiming = totalLeftSum / leftCount;
-            centeredRightHandOverallTiming = totalRightSum / rightCount;
+            return sum / count;
         }
 
         private static void PrintTimingData() {
             Log.Info(string.Format("Overall timing: {0:F1}ms", overallTiming));
-            Log.Info(string.Format("Left hand overall timing: {0:F1}ms", leftHandOverallTiming));
-            Log.Info(string.Format("Right hand overall timing: {0:F1}ms", rightHandOverallTiming));
-            Log.Info(string.Format("Centered left hand overall timing: {0:F1}ms", centeredLeftHandOverallTiming));
-            Log.Info(string.Format("Centered right hand overall timing: {0:F1}ms", centeredRightHandOverallTiming));
+            Log.Info(string.Format("Left hand overall timing: {0:F1}ms", leftOverallTiming));
+            Log.Info(string.Format("Right hand overall timing: {0:F1}ms", rightOverallTiming));
+            Log.Info(string.Format("Centered left hand overall timing: {0:F1}ms", centeredLeftOverallTiming));
+            Log.Info(string.Format("Centered right hand overall timing: {0:F1}ms", centeredRightOverallTiming));
             Log.Info(string.Format("Unstable rate: {0:F1}ms^2", unstableRate));
-            Log.Info(string.Format("Left hand unstable rate: {0:F1}ms^2", leftHandUnstableRate));
-            Log.Info(string.Format("Right hand unstable rate: {0:F1}ms^2", rightHandUnstableRate));
+            Log.Info(string.Format("Left hand unstable rate: {0:F1}ms^2", leftUnstableRate));
+            Log.Info(string.Format("Right hand unstable rate: {0:F1}ms^2", rightUnstableRate));
 
+            PrintGrid("Overall timings for each position:", averageTiming);
+            PrintGrid("Overall timings for each row:", averageRowTiming);
+            PrintGrid("Overall timings for each col:", averageColTiming);
+            PrintGrid("Left hand timings relative to average:", leftAverageTiming, leftOverallTiming);
+            PrintGrid("Right hand timings relative to average:", rightAverageTiming, rightOverallTiming);
+            PrintGrid("Centered Left hand timings relative to average:", centeredLeftAverageTiming, centeredLeftOverallTiming);
+            PrintGrid("Centered Right hand timings relative to average:", centeredRightAverageTiming, centeredRightOverallTiming);
+        }
+
+        private static void PrintGrid(string message, float[,] timings, float average = 0f) {
             string rowTimings;
             Log.Info("-");
-            Log.Info("Overall timings for each position: ");
-            for (int i = 0; i < 3; i++) {
+            Log.Info(message);
+            for (int i = 0; i < timings.GetLength(0); i++) {
                 rowTimings = "";
-                for (int j = 0; j < 4; j++) {
-                    if (averageTiming[i, j] == 0.0f)
+                for (int j = 0; j < timings.GetLength(1); j++) {
+                    if (timings[i, j] == 0.0f)
                         rowTimings += "N/A ";
                     else
-                        rowTimings += string.Format("{0:F1} ", averageTiming[i, j]);
-                }
-                Log.Info(rowTimings);
-            }
-            Log.Info("-");
-            Log.Info("Left hand timings relative to average: ");
-            for (int i = 0; i < 3; i++)
-            {
-                rowTimings = "";
-                for (int j = 0; j < 4; j++)
-                {
-                    if (leftHandAverageTiming[i, j] == 0.0f)
-                        rowTimings += "N/A ";
-                    else
-                        rowTimings += string.Format("{0:F1} ", leftHandAverageTiming[i, j] - leftHandOverallTiming);
-                }
-                Log.Info(rowTimings);
-            }
-            Log.Info("-");
-            Log.Info("Right hand timings relative to average (mirrored): ");
-            for (int i = 0; i < 3; i++) {
-                rowTimings = "";
-                for (int j = 3; j >= 0; j--) {
-                    if (rightHandAverageTiming[i, j] == 0.0f)
-                        rowTimings += "N/A ";
-                    else
-                        rowTimings += string.Format("{0:F1} ", rightHandAverageTiming[i, j] - rightHandOverallTiming);
-                }
-                Log.Info(rowTimings);
-            }
-            Log.Info("-");
-            Log.Info("Centered Left hand timings relative to average: ");
-            for (int i = 0; i < 3; i++)
-            {
-                rowTimings = "";
-                for (int j = 0; j < 3; j++) {
-                    if (centeredLeftHandAverageTiming[i, j] == 0.0f)
-                        rowTimings += "N/A ";
-                    else
-                        rowTimings += string.Format("{0:F1} ", centeredLeftHandAverageTiming[i, j] - centeredLeftHandOverallTiming);
-                }
-                Log.Info(rowTimings);
-            }
-            Log.Info("-");
-            Log.Info("Centered right hand timings relative to average (mirrored): ");
-            for (int i = 0; i < 3; i++)
-            {
-                rowTimings = "";
-                for (int j = 2; j >= 0; j--) {
-                    if (centeredRightHandAverageTiming[i, j] == 0.0f)
-                        rowTimings += "N/A ";
-                    else
-                        rowTimings += string.Format("{0:F1} ", centeredRightHandAverageTiming[i, j] - centeredRightHandOverallTiming);
+                        rowTimings += string.Format("{0:F1} ", timings[i, j] - average);
                 }
                 Log.Info(rowTimings);
             }
