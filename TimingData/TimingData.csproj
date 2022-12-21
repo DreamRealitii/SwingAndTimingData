@@ -114,7 +114,8 @@
   <ItemGroup>
     <Compile Include="Plugin.cs" />
     <Compile Include="Configuration\PluginConfig.cs" />
-    <Compile Include="TimingDataController.cs" />
+    <Compile Include="SwingData.cs" />
+    <Compile Include="TimingData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

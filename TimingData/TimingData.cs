@@ -1,49 +1,25 @@
-﻿using IPA;
-using IPA.Config;
-using IPA.Config.Stores;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using IPALogger = IPA.Logging.Logger;
 using BS_Utils.Utilities;
 
 namespace TimingData
 {
-    [Plugin(RuntimeOptions.SingleStartInit)]
-    public class Plugin
+    /// <summary>
+    /// Monobehaviours (scripts) are added to GameObjects.
+    /// For a full list of Messages a Monobehaviour can receive from the game, see https://docs.unity3d.com/ScriptReference/MonoBehaviour.html.
+    /// </summary>
+    public class TimingData : MonoBehaviour
     {
-        internal static Plugin Instance { get; private set; }
-        public static IPALogger Log { get; private set; }
+        public static TimingData Instance { get; private set; }
+        internal static IPALogger Log { get; private set; }
 
-        [Init]
-        /// <summary>
-        /// Called when the plugin is first loaded by IPA (either when the game starts or when the plugin is enabled if it starts disabled).
-        /// [Init] methods that use a Constructor or called before regular methods like InitWithConfig.
-        /// Only use [Init] with one Constructor.
-        /// </summary>
-        public void Init(IPALogger logger)
-        {
-            Instance = this;
-            Log = logger;
-            Log.Info("TimingData initialized.");
-        }
-
-        #region BSIPA Config
-        //Uncomment to use BSIPA's config
-        /*
-        [Init]
-        public void InitWithConfig(Config conf)
-        {
-            Configuration.PluginConfig.Instance = conf.Generated<Configuration.PluginConfig>();
-            Log.Debug("Config loaded");
-        }
-        */
-        #endregion
-
-        /*
         // Uses units of millisecods.
         // Position [0, 0] = top left, [2, 3] = bottom right.
         private static List<float>[,] timings = new List<float>[3, 4], leftTimings = new List<float>[3, 4], rightTimings = new List<float>[3, 4];
@@ -60,16 +36,25 @@ namespace TimingData
 
         private const float minHitboxDistance = 0.559017f, maxHitboxDistance = 0.640312f; // Distance in meters from yz/xz hitbox to center.
         private const float degreesToRadians = 0.0174533f;
-        */
 
-        [OnStart]
-        public void OnApplicationStart()
-        {
-            Log.Debug("OnApplicationStart");
-            new GameObject("TimingData").AddComponent<TimingData>();
-            new GameObject("SwingData").AddComponent<SwingData>();
+        // These methods are automatically called by Unity, you should remove any you aren't using.
+        #region Monobehaviour Messages
+        /// <summary>
+        /// Only ever called once, mainly used to initialize variables.
+        /// </summary>
+        private void Awake() {
+            // For this particular MonoBehaviour, we only want one instance to exist at any time, so store a reference to it in a static property
+            //   and destroy any that are created while one already exists.
+            Log = Plugin.Log;
+            if (Instance != null) {
+                Plugin.Log?.Warn($"Instance of {GetType().Name} already exists, destroying.");
+                GameObject.DestroyImmediate(this);
+                return;
+            }
+            GameObject.DontDestroyOnLoad(this); // Don't destroy this object on scene changes
+            Instance = this;
+            Plugin.Log?.Debug($"{name}: Awake()");
 
-            /*
             BSEvents.gameSceneLoaded += OnLevelStart;
             BSEvents.noteWasCut += OnNoteCut;
             BSEvents.LevelFinished += OnLevelEnd;
@@ -90,17 +75,20 @@ namespace TimingData
                 rowTimings[i, 0] = new List<float>();
             for (int i = 0; i < 4; i++)
                 colTimings[0, i] = new List<float>();
-            */
+            prevLeftNotePos[0] = 0; prevLeftNotePos[1] = 1; prevRightNotePos[0] = 0; prevRightNotePos[1] = 2;
         }
 
-        [OnExit]
-        public void OnApplicationQuit()
-        {
-            Log.Debug("OnApplicationQuit");
+        /// <summary>
+        /// Called when the script is being destroyed.
+        /// </summary>
+        private void OnDestroy() {
+            Plugin.Log?.Debug($"{name}: OnDestroy()");
+            if (Instance == this)
+                Instance = null; // This MonoBehaviour is being destroyed, so set the static instance property to null.
 
         }
+        #endregion
 
-        /*
         private void OnLevelStart() {
             levelEnded = false;
         }
@@ -146,7 +134,7 @@ namespace TimingData
             centeredLeftOverallTiming = 0f; centeredRightOverallTiming = 0f;
             unstableRate = 0f;
             leftUnstableRate = 0f; rightUnstableRate = 0f;
-            prevLeftNotePos[0] = 1; prevLeftNotePos[1] = 1; prevRightNotePos[0] = 1; prevRightNotePos[1] = 1;
+            prevLeftNotePos[0] = 0; prevLeftNotePos[1] = 1; prevRightNotePos[0] = 0; prevRightNotePos[1] = 2;
         }
 
         private static void AddTimingData(NoteCutInfo nci) {
@@ -159,9 +147,9 @@ namespace TimingData
             }
             col = nci.noteData.lineIndex;
 
-            //In Beat Saber code, NoteCutInfo.timeDeviation = note time - current time.
+            //In Beat Saber code, NoteCutInfo.timeDeviation = (note time - current time) in seconds.
             float distanceToCenter = (minHitboxDistance * (float)Math.Cos(nci.cutDirDeviation * degreesToRadians)) + (maxHitboxDistance * (float)Math.Sin(nci.cutDirDeviation * degreesToRadians));
-            float time = (nci.timeDeviation - (distanceToCenter / nci.saberSpeed)) * -1000f;
+            float time = (-nci.timeDeviation + (distanceToCenter / nci.saberSpeed)) * 1000f;
 
             timings[row, col].Add(time);
             rowTimings[row, 0].Add(time);
@@ -170,10 +158,11 @@ namespace TimingData
                 leftTimings[row, col].Add(time);
                 if (IsCenteredNote(row, col, nci.noteData.cutDirection) && IsOppositePosition(nci.saberType, row, col))
                     centeredLeftTimings[row, col].Add(time);
-            } else {
+            }
+            else {
                 rightTimings[row, col].Add(time);
-                if (IsCenteredNote(row, 3-col, nci.noteData.cutDirection.Mirrored()) && IsOppositePosition(nci.saberType, row, 3-col))
-                    centeredRightTimings[row, col-1].Add(time);
+                if (IsCenteredNote(row, 3 - col, nci.noteData.cutDirection.Mirrored()) && IsOppositePosition(nci.saberType, row, 3 - col))
+                    centeredRightTimings[row, col - 1].Add(time);
             }
         }
 
@@ -196,7 +185,8 @@ namespace TimingData
             if (st == SaberType.SaberA) {
                 if (row + prevLeftNotePos[0] == 2 && col + prevLeftNotePos[1] == 2) result = true;
                 prevLeftNotePos[0] = row; prevLeftNotePos[1] = col;
-            } else {
+            }
+            else {
                 if (row + prevRightNotePos[0] == 2 && col + prevRightNotePos[1] == 2) result = true;
                 prevRightNotePos[0] = row; prevRightNotePos[1] = col;
             }
@@ -252,6 +242,7 @@ namespace TimingData
         }
 
         private static void PrintTimingData() {
+            Log.Info("Printing Timing Data:");
             Log.Info(string.Format("Overall timing: {0:F1}ms", overallTiming));
             Log.Info(string.Format("Left hand overall timing: {0:F1}ms", leftOverallTiming));
             Log.Info(string.Format("Right hand overall timing: {0:F1}ms", rightOverallTiming));
@@ -285,6 +276,5 @@ namespace TimingData
                 Log.Info(rowTimings);
             }
         }
-        */
     }
 }
