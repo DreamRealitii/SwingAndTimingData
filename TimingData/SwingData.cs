@@ -207,7 +207,6 @@ namespace TimingData
                         centeredPositionsWithData++;
                     }
                     else averageResults[i, j] = Vector3.zero;
-                    Log.Info("averageResults[" + i + ", " + j + "] = " + averageResults[i, j]);
                 }
             }
             Log.Info("-");
@@ -215,11 +214,9 @@ namespace TimingData
             for (int i = 0; i < swings.GetLength(0); i++)
                 for (int j = 0; j < swings.GetLength(1); j++)
                     totalSum += averageResults[i, j];
-            if (rotations)
-                totalSum /= centeredPositionsWithData;
-            else totalSum.z /= centeredPositionsWithData;
+            totalSum /= centeredPositionsWithData;
             return totalSum;
-        }
+        } 
 
         private static void PrintSwingData() {
             Log.Info("Printing Swing Data:");
