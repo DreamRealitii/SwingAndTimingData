@@ -9,7 +9,7 @@ using UnityEngine;
 using IPALogger = IPA.Logging.Logger;
 using BS_Utils.Utilities;
 
-namespace TimingData
+namespace SwingAndTimingData
 {
     /// <summary>
     /// Monobehaviours (scripts) are added to GameObjects.
@@ -25,6 +25,8 @@ namespace TimingData
         private static List<Vector3>[,] leftSaberPos = new List<Vector3>[3, 3], rightSaberPos = new List<Vector3>[3, 3], leftSaberRot = new List<Vector3>[3, 3], rightSaberRot = new List<Vector3>[3, 3];
         private static Vector3[,] averageLeftSaberPos = new Vector3[3, 3], averageRightSaberPos = new Vector3[3, 3], averageLeftSaberRot = new Vector3[3, 3], averageRightSaberRot = new Vector3[3, 3];
         private static Vector3 overallLeftSaberPos, overallRightSaberPos, overallLeftSaberRot, overallRightSaberRot;
+        private static List<float> leftSaberRotZ, rightSaberRotZ; // Instead of saying how far forward the saber is pointing for Z rotation, give directional deviance.
+        private static float overallLeftSaberRotZ, overallRightSaberRotZ;
         private static int[] prevLeftNotePos = new int[2], prevRightNotePos = new int[2];
         private static bool levelEnded = false; // Because BSEvents.LevelFinished sometimes gets played more than once.
 
@@ -58,6 +60,8 @@ namespace TimingData
                     rightSaberRot[i, j] = new List<Vector3>();
                 }
             }
+            leftSaberRotZ = new List<float>();
+            rightSaberRotZ = new List<float>();
             prevLeftNotePos[0] = 0; prevLeftNotePos[1] = 1; prevRightNotePos[0] = 0; prevRightNotePos[1] = 2;
         }
 
@@ -100,6 +104,8 @@ namespace TimingData
                 }
             }
             prevLeftNotePos[0] = 0; prevLeftNotePos[1] = 1; prevRightNotePos[0] = 0; prevRightNotePos[1] = 2;
+            leftSaberRotZ.Clear();
+            rightSaberRotZ.Clear();
         }
 
         // Only adds centered swings, so very inefficient.
@@ -116,10 +122,10 @@ namespace TimingData
 
             // Get relative saber position and rotation.
             Vector3 saberPos = nci.saberMovementData.lastAddedData.bottomPos;
-            saberPos.x -= nci.saberType == SaberType.SaberA ? -0.3f : 0.3f;
-            saberPos.y -= CalculateMidRowHeight(row, nci.notePosition.y);
-            saberPos *= 100f;
+            Vector3 centerPos = new Vector3(nci.saberType == SaberType.SaberA ? -0.3f : 0.3f, CalculateMidRowHeight(row, nci.notePosition.y));
+            saberPos = (saberPos - centerPos) * 100f;
             Vector3 saberRot = nci.saberMovementData.lastAddedData.topPos - nci.saberMovementData.lastAddedData.bottomPos;
+            float saberRotZ = Vector2.SignedAngle(nci.notePosition - centerPos, saberRot);
             if (nci.saberType == SaberType.SaberA)
                 saberRot = CalculateUpwardsSwingRotation(saberRot, nci.saberType, row, col).normalized * 90f;
             else saberRot = CalculateUpwardsSwingRotation(saberRot, nci.saberType, row, 3 - col).normalized * 90f;
@@ -129,12 +135,14 @@ namespace TimingData
                 if (IsCenteredNote(row, col, nci.noteData.cutDirection) && IsOppositePosition(nci.saberType, row, col)) {
                     leftSaberPos[row, col].Add(saberPos);
                     leftSaberRot[row, col].Add(saberRot);
+                    leftSaberRotZ.Add(saberRotZ);
                 }
             }
             else {
                 if (IsCenteredNote(row, 3 - col, nci.noteData.cutDirection.Mirrored()) && IsOppositePosition(nci.saberType, row, 3 - col)) {
                     rightSaberPos[row, col - 1].Add(saberPos);
                     rightSaberRot[row, col - 1].Add(saberRot);
+                    rightSaberRotZ.Add(saberRotZ);
                 }
             }
         }
@@ -191,6 +199,13 @@ namespace TimingData
             overallRightSaberPos = AverageSwingCalculator(rightSaberPos, averageRightSaberPos, false);
             overallLeftSaberRot = AverageSwingCalculator(leftSaberRot, averageLeftSaberRot, true);
             overallRightSaberRot = AverageSwingCalculator(rightSaberRot, averageRightSaberRot, true);
+            float leftRotZSum = 0f, rightRotZSum = 0f;
+            foreach (float f in leftSaberRotZ)
+                leftRotZSum += f;
+            foreach (float f in rightSaberRotZ)
+                rightRotZSum += f;
+            overallLeftSaberRotZ = leftRotZSum / leftSaberRotZ.Count;
+            overallRightSaberRotZ = rightRotZSum / rightSaberRotZ.Count;
         }
 
         // Sets average timing values for each position in averageResults, returns average for all positions.
@@ -209,21 +224,23 @@ namespace TimingData
                     else averageResults[i, j] = Vector3.zero;
                 }
             }
-            Log.Info("-");
             Vector3 totalSum = new Vector3(0f, 0f, 0f);
             for (int i = 0; i < swings.GetLength(0); i++)
                 for (int j = 0; j < swings.GetLength(1); j++)
                     totalSum += averageResults[i, j];
-            totalSum /= centeredPositionsWithData;
+            if (rotations)
+                totalSum = totalSum.normalized * 90f;
+            else totalSum /= centeredPositionsWithData;
             return totalSum;
         } 
 
         private static void PrintSwingData() {
             Log.Info("Printing Swing Data:");
-            Log.Info("Left Hand Overall Position:   " + overallLeftSaberPos);
-            Log.Info("Right Hand Overall Position:  " + overallRightSaberPos);
-            Log.Info("Left Hand Overall Direction:  " + overallLeftSaberRot);
-            Log.Info("Right Hand Overall Direction: " + overallRightSaberRot);
+            Log.Info(String.Format("Left Hand Overall Position:   X:  {0,6:F2}cm, Y:  {1,6:F2}cm, Z: {2,6:F2}cm", overallLeftSaberPos.x, overallLeftSaberPos.y, overallLeftSaberPos.z));
+            Log.Info(String.Format("Right Hand Overall Position:  X:  {0,6:F2}cm, Y:  {1,6:F2}cm, Z: {2,6:F2}cm", overallRightSaberPos.x, overallRightSaberPos.y, overallRightSaberPos.z));
+            Log.Info(String.Format("Left Hand Overall Direction:  X: {0,6:F2}deg, Y: {1,6:F2}deg, Z: {2,6:F2}deg", overallLeftSaberRot.x, overallLeftSaberRot.y, overallLeftSaberRotZ));
+            Log.Info(String.Format("Right Hand Overall Direction: X: {0,6:F2}deg, Y: {1,6:F2}deg, Z: {2,6:F2}deg", overallRightSaberRot.x, overallRightSaberRot.y, overallRightSaberRotZ));
+            Log.Info("- -");
         }
     }
 }

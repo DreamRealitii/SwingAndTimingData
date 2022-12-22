@@ -9,7 +9,7 @@ using UnityEngine;
 using IPALogger = IPA.Logging.Logger;
 using BS_Utils.Utilities;
 
-namespace TimingData
+namespace SwingAndTimingData
 {
     /// <summary>
     /// Monobehaviours (scripts) are added to GameObjects.
@@ -243,14 +243,14 @@ namespace TimingData
 
         private static void PrintTimingData() {
             Log.Info("Printing Timing Data:");
-            Log.Info(string.Format("Overall timing: {0:F1}ms", overallTiming));
-            Log.Info(string.Format("Left hand overall timing: {0:F1}ms", leftOverallTiming));
-            Log.Info(string.Format("Right hand overall timing: {0:F1}ms", rightOverallTiming));
-            Log.Info(string.Format("Centered left hand overall timing: {0:F1}ms", centeredLeftOverallTiming));
-            Log.Info(string.Format("Centered right hand overall timing: {0:F1}ms", centeredRightOverallTiming));
-            Log.Info(string.Format("Unstable rate: {0:F1}ms^2", unstableRate));
-            Log.Info(string.Format("Left hand unstable rate: {0:F1}ms^2", leftUnstableRate));
-            Log.Info(string.Format("Right hand unstable rate: {0:F1}ms^2", rightUnstableRate));
+            Log.Info(string.Format("Overall timing:                     {0:F2}ms", overallTiming));
+            Log.Info(string.Format("Left hand overall timing:           {0:F2}ms", leftOverallTiming));
+            Log.Info(string.Format("Right hand overall timing:          {0:F2}ms", rightOverallTiming));
+            Log.Info(string.Format("Centered left hand overall timing:  {0:F2}ms", centeredLeftOverallTiming));
+            Log.Info(string.Format("Centered right hand overall timing: {0:F2}ms", centeredRightOverallTiming));
+            Log.Info(string.Format("Unstable rate:                      {0:F0}ms^2", unstableRate));
+            Log.Info(string.Format("Left hand unstable rate:            {0:F0}ms^2", leftUnstableRate));
+            Log.Info(string.Format("Right hand unstable rate:           {0:F0}ms^2", rightUnstableRate));
 
             PrintGrid("Overall timings for each position:", averageTiming);
             PrintGrid("Overall timings for each row:", averageRowTiming);
@@ -271,7 +271,7 @@ namespace TimingData
                     if (timings[i, j] == 0.0f)
                         rowTimings += "N/A ";
                     else
-                        rowTimings += string.Format("{0:F1} ", timings[i, j] - average);
+                        rowTimings += string.Format("{0,-4:F0} ", timings[i, j] - average);
                 }
                 Log.Info(rowTimings);
             }

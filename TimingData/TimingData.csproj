@@ -8,8 +8,8 @@
     <ProjectGuid>{89545332-B51D-42E8-84E0-2716840A72BF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TimingData</RootNamespace>
-    <AssemblyName>TimingData</AssemblyName>
+    <RootNamespace>SwingAndTimingData</RootNamespace>
+    <AssemblyName>SwingAndTimingData</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <DebugSymbols>true</DebugSymbols>
