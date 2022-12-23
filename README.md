@@ -7,10 +7,10 @@ Measures timing statistics of a Beat Saber play and makes multiple calculations 
 - "Centered" time difference, where TimingData only counts non-inverted swings on the note positions circling each hand.
 
 Notes:
-- Swing data is calculated using only centered swings.
+- Swing data is calculated using only centered swings. For best results, play linear maps that use both top and bottom rows and have lots of notes.
 - For position and direction, Positive X means to the right, positive Y means up, positive Z means forward.
 - Adjust Saber X direction by changing Saber Y rotation setting, Saber Y direction by changing Saber X rotation setting.
-- Saber Z direction is not how far forward the Saber is pointing, but the difference between the direction of the saber, and the direction from the last note to the next note. A positive value means your swings are too clockwise.
+- Saber Z direction is not how far forward the Saber is pointing, but the difference between the direction of the saber, and the direction from the last note to the next note. A positive value means your swings are too far clockwise.
 - Data can be skewed by not standing in the center and facing exactly forward. It might be helpful to subtract the headset x/z position (which can be found in BeatLeader scores) form the saber x/z positions.
 - Beat Saber calculates time difference when your saber touches the hitbox instead of passing through the center of the note, so the value is always earlier than it's supposed to be. I try to manually calculate the remaining difference using the hitbox size, cut angle difference, and saber speed.
 - Because of above calculations, Pro Mode/Pro Mode + Small Cube values will be slightly late.
