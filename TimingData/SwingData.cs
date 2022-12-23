@@ -217,7 +217,7 @@ namespace SwingAndTimingData
                     positionSum = new Vector3(0f, 0f, 0f);
                     foreach (Vector3 n in swings[i, j])
                         positionSum += n;
-                    if (swings[i, j].Count > 1) {
+                    if (swings[i, j].Count > 0 && HasOppositeData(swings, i, j)) {
                         averageResults[i, j] = positionSum / swings[i, j].Count;
                         centeredPositionsWithData++;
                     }
@@ -232,7 +232,20 @@ namespace SwingAndTimingData
                 totalSum = totalSum.normalized * 90f;
             else totalSum /= centeredPositionsWithData;
             return totalSum;
-        } 
+        }
+
+        // Data needs to exist on both sides of the center or else overall results will be heavily skewed.
+        private static bool HasOppositeData(List<Vector3>[,] swings, int row, int col) {
+            if (row == 0 && col == 0) return swings[2, 2].Count > 0;
+            if (row == 0 && col == 1) return swings[2, 1].Count > 0;
+            if (row == 0 && col == 2) return swings[2, 0].Count > 0;
+            if (row == 1 && col == 0) return swings[1, 2].Count > 0;
+            if (row == 1 && col == 2) return swings[1, 0].Count > 0;
+            if (row == 2 && col == 0) return swings[0, 2].Count > 0;
+            if (row == 2 && col == 1) return swings[0, 1].Count > 0;
+            if (row == 2 && col == 2) return swings[0, 0].Count > 0;
+            return false;
+        }
 
         private static void PrintSwingData() {
             Log.Info("Printing Swing Data:");
